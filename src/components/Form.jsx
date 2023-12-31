@@ -2,14 +2,18 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Button, Col, Form, FormGroup, Input, Label, Row } from "reactstrap";
 import { addTodo } from "../Redux/todoApp/action";
+import { db } from "../firebase/Firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 
 const TodoForm = () => {
   const [todoValue, setTodoValue] = useState("");
   const dispatch = useDispatch();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Add todo to Redux state
     let date = new Date();
     let time = date.getTime();
     let todoObj = {
@@ -18,8 +22,21 @@ const TodoForm = () => {
       completed: false,
     };
     setTodoValue("");
-    dispatch(addTodo(todoObj))
+    dispatch(addTodo(todoObj));
+
+    // Add todo to Firebase Firestore
+    try {
+      const docRef = await addDoc(collection(db, "todos"), {
+        id: time,
+        todo: todoValue,
+        completed: false,
+      });
+      console.log("Todo added to Firestore with ID: ", docRef.id);
+    } catch (error) {
+      console.error("Error adding todo to Firestore: ", error);
+    }
   };
+
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -39,7 +56,7 @@ const TodoForm = () => {
           </FormGroup>
         </Col>
         <Col md={2}>
-          <Button type="submit">Submit</Button>
+          <Button type="submit">Add</Button>
         </Col>
       </Row>
     </Form>
